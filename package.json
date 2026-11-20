@@ -2,10 +2,9 @@
   "name": "packages-demo",
   "version": "1.0.0",
   "description": "Fullstack React + Express Demo for @ashwinop/api-response-kit",
+  "main": "index.js",
   "scripts": {
-    "start": "node server/server.js",
-    "server": "node server/server.js",
-    "client": "npm --prefix client run dev"
+    "start": "node index.js"
   },
   "dependencies": {
     "@ashwinop/api-response-kit": "^1.0.0",
