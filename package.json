@@ -3,11 +3,16 @@
   "version": "1.0.0",
   "description": "Fullstack React + Express Demo for @ashwinop/api-response-kit",
   "scripts": {
-    "install:all": "npm --prefix server install && npm --prefix client install",
-    "build:client": "npm --prefix client run build",
+    "build": "cd client && npm install && npm run build",
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install",
     "start": "node server/server.js",
     "server": "node server/server.js",
     "client": "npm --prefix client run dev"
+  },
+  "dependencies": {
+    "@ashwinop/api-response-kit": "^1.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
   },
   "keywords": ["express", "react", "api-response-kit", "demo"],
   "author": "Ashwin Alwa",
