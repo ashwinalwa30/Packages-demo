@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const {
   responseKit,
   errorHandler,
@@ -140,6 +141,22 @@ app.get(
     throw new Error('Database connection timed out unexpected crash');
   })
 );
+
+// ─── Serve React Frontend (Static Assets & SPA fallback) ─────────────────────
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
+
+// For non-API routes, serve React index.html
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  res.sendFile(path.join(distPath, 'index.html'), (err) => {
+    if (err) {
+      next();
+    }
+  });
+});
 
 // Catch-all 404 for unmatched API routes
 app.all('/api/*', notFound({ message: 'The route {path} could not be found.' }));

@@ -13,7 +13,6 @@ const {
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Enable CORS for React frontend
 app.use(cors());
 app.use(express.json());
 
@@ -144,22 +143,24 @@ app.get(
   })
 );
 
-// ─── Serve React Static Build (if built) ──────────────────────────────────────
-const clientDistPath = path.join(__dirname, '../client/dist');
-app.use(express.static(clientDistPath));
+// ─── Serve React Static Build ────────────────────────────────────────────────
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
 
-// 404 for unmatched API routes
-app.all('/api/*', notFound({ message: 'The route {path} could not be found.' }));
-
-// For all other routes, serve React index.html if available
+// For all non-API routes, serve React index.html
 app.get('*', (req, res, next) => {
-  const indexHtml = path.join(clientDistPath, 'index.html');
-  res.sendFile(indexHtml, (err) => {
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  res.sendFile(path.join(distPath, 'index.html'), (err) => {
     if (err) {
       next();
     }
   });
 });
+
+// Catch-all 404 for unmatched API routes
+app.all('/api/*', notFound({ message: 'The route {path} could not be found.' }));
 
 // Centralized error handler
 app.use(errorHandler({ version: 'v1.0' }));
