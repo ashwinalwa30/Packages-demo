@@ -14,6 +14,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Restore original URL when rewritten by Vercel
+app.use((req, res, next) => {
+  if (req.headers['x-matched-path']) {
+    req.url = req.headers['x-matched-path'];
+  }
+  next();
+});
+
 // 1. Request tracing middleware (adds req.id & X-Request-Id header)
 app.use(requestId());
 
