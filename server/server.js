@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 const {
   responseKit,
@@ -10,9 +11,10 @@ const {
 } = require('@ashwinop/api-response-kit');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5001;
 
-// Body parser
+// Enable CORS for React frontend
+app.use(cors());
 app.use(express.json());
 
 // 1. Request tracing middleware (adds req.id & X-Request-Id header)
@@ -27,9 +29,6 @@ app.use(
   })
 );
 
-// Serve interactive UI
-app.use(express.static(path.join(__dirname, 'public')));
-
 // ─── API Routes ─────────────────────────────────────────────────────────────
 
 // 1. Standard Success (200)
@@ -37,8 +36,9 @@ app.get('/api/health', (req, res) => {
   res.sendSuccess({
     data: {
       status: 'UP',
-      uptime: process.uptime(),
-      memoryUsage: process.memoryUsage(),
+      uptime: `${Math.floor(process.uptime())}s`,
+      timestamp: new Date().toISOString(),
+      nodeVersion: process.version,
     },
     message: 'API is healthy and operational',
   });
@@ -57,10 +57,10 @@ app.post(
     }
 
     const newUser = {
-      id: Math.floor(Math.random() * 1000) + 1,
+      id: Math.floor(Math.random() * 9000) + 1000,
       name: name || 'Demo User',
       email,
-      role: role || 'member',
+      role: role || 'developer',
       createdAt: new Date().toISOString(),
     };
 
@@ -74,15 +74,14 @@ app.post(
 // 3. Paginated Response with HATEOAS Links
 app.get('/api/users', (req, res) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 5;
-  const total = 42;
+  const limit = parseInt(req.query.limit) || 4;
+  const total = 28;
 
   const mockUsers = [
     { id: 1, name: 'Alice Smith', email: 'alice@example.com', role: 'admin' },
     { id: 2, name: 'Bob Johnson', email: 'bob@example.com', role: 'developer' },
     { id: 3, name: 'Charlie Brown', email: 'charlie@example.com', role: 'designer' },
     { id: 4, name: 'Diana Prince', email: 'diana@example.com', role: 'manager' },
-    { id: 5, name: 'Evan Wright', email: 'evan@example.com', role: 'member' },
   ];
 
   res.sendPaginated({
@@ -145,18 +144,30 @@ app.get(
   })
 );
 
-// ─── Catch-all & Centralized Error Handler ────────────────────────────────────
+// ─── Serve React Static Build (if built) ──────────────────────────────────────
+const clientDistPath = path.join(__dirname, '../client/dist');
+app.use(express.static(clientDistPath));
 
-// 404 for unknown endpoints
-app.use(notFound({ message: 'The route {path} could not be found on this server.' }));
+// 404 for unmatched API routes
+app.all('/api/*', notFound({ message: 'The route {path} could not be found.' }));
+
+// For all other routes, serve React index.html if available
+app.get('*', (req, res, next) => {
+  const indexHtml = path.join(clientDistPath, 'index.html');
+  res.sendFile(indexHtml, (err) => {
+    if (err) {
+      next();
+    }
+  });
+});
 
 // Centralized error handler
 app.use(errorHandler({ version: 'v1.0' }));
 
-// Start server if not running serverless
+// Start server
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   app.listen(PORT, () => {
-    console.log(`🚀 api-response-kit Demo Server running at http://localhost:${PORT}`);
+    console.log(`🚀 api-response-kit Server running on http://localhost:${PORT}`);
   });
 }
 
